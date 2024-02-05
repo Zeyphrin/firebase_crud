@@ -2,59 +2,98 @@ import 'package:flutter/widgets.dart';
 import 'package:crud_project/todo_model.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uuid/uuid.dart';
 
-class TodoController extends GetxController {
-  TextEditingController title = TextEditingController();
-  TextEditingController updatedTitle = TextEditingController();
-
-  final uId = const Uuid();
+class ContactController extends GetxController{
+  TextEditingController name = TextEditingController();
+  TextEditingController number = TextEditingController();
   final db = FirebaseFirestore.instance;
+  var contactList = RxList<ContactModel>();
+  int idNo = 0;
 
-  RxList<TodoModel> todoList = RxList<TodoModel>();
-
-  void OnInit() {
+  @override
+  void onInit() {
+    // TODO: implement onInit
     super.onInit();
-    getTodo();
+    getContact();
   }
 
-  Future<void> addTodo() async {
-    String id = uId.v4();
-    var newTodo = TodoModel(
-      id: id,
-      title: title.text,
-    );
-    await db.collection("todo").doc(id).set(newTodo.toJson());
-    title.clear();
-    getTodo();
-    print("Todo added to Database");
-  }
-
-  Future<void> getTodo() async {
-    todoList.clear();
-    await db.collection("todo").get().then((allTodo) {
-      for (var todo in allTodo.docs) {
-        todoList.add(
-          TodoModel.fromJson(
-            todo.data(),
-          ),
-        );
+  void deleteContact(String id) async {
+    try {
+      QuerySnapshot querySnapshot = await db.collection("contact").get();
+      for (var documentSnapshot in querySnapshot.docs) {
+        await documentSnapshot.reference.delete();
       }
-    });
-    print("Get Todo");
+      contactList.removeWhere((element) => element.id == id);
+      for (var contact in contactList) {
+        await db.collection("contact").add(contact.toJson());
+      }
+    }catch (e) {
+      print("error deleting contact: $e");
+    }
   }
 
-  Future<void> deleteTodo(String id) async {
-    await db.collection("todo").doc(id).delete();
-    print("Todo Deleted");
-    getTodo();
+  void addContact() async {
+    try {
+      var contact = ContactModel(
+        name: name.text,
+        number: number.text,
+        id: db.collection("contact").doc().id,
+      );
+
+      await db.collection("contact").doc(contact.id).set(contact.toJson());
+
+      printInfo(info: "Contact Added");
+      getContact();
+      name.clear();
+      number.clear();
+    } catch (e) {
+      print("Error adding contact: $e");
+    }
   }
 
-  Future<void> updateTodo(TodoModel todo) async {
-    var updatedTodo = TodoModel(id: todo.id, title: updatedTitle.text);
-    await db.collection("todo").doc(todo.id).set(updatedTodo.toJson());
-    getTodo();
-    Get.back();
-    print("Todo Updated");
+  void getContact() async {
+    var conacts = await db.collection("contact").get();
+    contactList.clear();
+      for (var contact in conacts.docs) {
+        contactList.add(ContactModel.fromJson(contact.data(),),);
+      }
+    print("Get Contact");
   }
+
+  void updateContact(String id, String newName, String newNumber) async {
+    try {
+      var index = contactList.indexWhere((element) => element.id == id);
+
+      if (index != -1) {
+        var updatedContact = ContactModel(
+          id: id,
+          name: newName,
+          number: newNumber,
+        );
+
+        var contactDoc = await db.collection("contact").doc(id).get();
+        if (contactDoc.exists) {
+          await db.collection("contact").doc(id).update(updatedContact.toJson());
+
+          contactList[index] = updatedContact;
+
+          printInfo(info: "Kontak Diperbarui");
+          name.clear();
+          number.clear();
+        } else {
+          print("Dokumen kontak dengan ID $id tidak ditemukan di Firestore");
+        }
+      } else {
+        print("Kontak tidak ditemukan");
+      }
+    } catch (e) {
+      print("Error updating contact: $e");
+    }
+  }
+
+
+
+
+
+
 }

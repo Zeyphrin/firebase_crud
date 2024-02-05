@@ -1,18 +1,21 @@
-class TodoModel {
+class ContactModel {
+  String? name;
+  String? number;
   String? id;
-  String? title;
 
-  TodoModel({this.id, this.title});
+  ContactModel({this.name, this.number,this.id});
 
-  TodoModel.fromJson(Map<String, dynamic> json) {
+  ContactModel.fromJson(Map<String, dynamic> json) {
+    name = json["name"];
+    number = json["number"];
     id = json["id"];
-    title = json["title"];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    data["name"] = name;
+    data["number"] = number;
     data["id"] = id;
-    data["title"] = title;
     return data;
   }
 }

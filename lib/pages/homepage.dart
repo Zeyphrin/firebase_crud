@@ -6,7 +6,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TodoController todoController = Get.put(TodoController());
+   ContactController contactController = Get.put(ContactController());
+    TextEditingController updateNameController = TextEditingController();
+    TextEditingController updateNumberController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
@@ -22,7 +24,7 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextFormField(
-                    controller: todoController.title,
+                    controller: contactController.name,
                     decoration: const InputDecoration(
                       fillColor: Colors.white,
                       filled: true,
@@ -32,7 +34,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(width: 10),
                 InkWell(
                   onTap: () {
-                    todoController.addTodo();
+                    contactController.addContact();;
                   },
                   child: Container(
                     height: 45,
@@ -58,103 +60,75 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Expanded(
-              child: Obx(
-                    () => ListView(
-                  children: todoController.todoList
-                      .map(
-                        (e) => Card(
-                      elevation: 3,
-                      child: ListTile(
-                        tileColor: Colors.white,
-                        onTap: () {},
-                        title: Text(
-                          e.title??"",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                todoController.deleteTodo(e.id??"");
-                              },
-                              icon: Icon(Icons.delete),
-                              color: Colors.red,
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                todoController.updatedTitle.text =
-                                e.title!;
-                                Get.defaultDialog(
-                                  title: "UPDATE TODO",
-                                  content: StatefulBuilder(
-                                    builder: (BuildContext context,
-                                        StateSetter setState) {
-                                      return Container(
-                                        height: 100,
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextFormField(
-                                                controller:
-                                                todoController
-                                                    .updatedTitle,
-                                                decoration:
-                                                const InputDecoration(
-                                                  fillColor:
-                                                  Colors.white,
-                                                  filled: true,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
-                                            InkWell(
-                                              onTap: () {
-                                                todoController
-                                                    .updateTodo(e);
-                                                Get.back();
-                                              },
-                                              child: Container(
-                                                height: 45,
-                                                width: 45,
-                                                decoration:
-                                                BoxDecoration(
-                                                  color: Colors
-                                                      .deepPurple,
-                                                  borderRadius:
-                                                  BorderRadius
-                                                      .circular(10),
-                                                ),
-                                                child: const Icon(
-                                                  Icons.done,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            )
-                                          ],
+           Container(
+                  height: 500.0,
+                  child: Obx(() => ListView.builder(
+                    itemCount: contactController.contactList.length,
+                    itemBuilder: (context, index) {
+                      var element = contactController.contactList[index];
+                      return ListTile(
+                        title: Text(element.name.toString()),
+                        subtitle: Text(element.number.toString()),
+                        trailing: PopupMenuButton(
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              child: Text("Edit"),
+                              onTap: () {
+                                updateNameController.text = element.name!;
+                                updateNumberController.text = element.number!;
+
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text("Edit Todo List"),
+                                      content: Column(
+                                        children: [
+                                          TextFormField(
+                                            controller: updateNameController,
+                                            decoration: InputDecoration(hintText: "Enter todo"),
+                                          ),
+                                          SizedBox(height: 10),
+                                          TextFormField(
+                                            controller: updateNumberController,
+                                            decoration: InputDecoration(hintText: "Enter sub text"),
+                                          ),
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text("Cancel"),
                                         ),
-                                      );
-                                    },
-                                  ),
+                                        TextButton(
+                                          onPressed: () {
+                                            contactController.updateContact(
+                                              element.id.toString(),
+                                              updateNameController.text!,
+                                              updateNumberController.text!,
+                                            );;
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text("Save"),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 );
                               },
-                              icon: Icon(Icons.edit),
-                              color: Colors.blue,
+                            ),
+                            PopupMenuItem(
+                              child: Text("Delete"),
+                              onTap: () => contactController.deleteContact(element.id.toString()),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  )
-                      .toList(),
+                      );
+                    },
+                  )),
                 ),
-              ),
-            ),
           ],
         ),
       ),
